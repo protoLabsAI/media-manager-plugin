@@ -105,7 +105,7 @@ _PAGE = """<!doctype html>
 </head>
 <body>
 <div class="wrap">
-  <h1>🎬 Media Manager</h1>
+  <h1>Media Manager</h1>
   <p class="sub" id="serverline">Paste a YouTube / video URL or drop a file — it's pulled, tagged for Jellyfin, and filed into the library.</p>
 
   <div class="card">
