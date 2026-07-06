@@ -1,0 +1,48 @@
+id: media_manager
+name: Media Manager
+version: 0.1.0
+description: >-
+  Pull a YouTube or direct video/MP4 URL (or upload a file), generate Jellyfin
+  metadata (NFO + poster), and drop it into a media library — then trigger a
+  Jellyfin scan. Handles playlists/channels, audio-only extraction, and
+  subtitles + chapters. Downloads run in the background with a live job queue.
+repository: https://github.com/protoLabsAI/media-manager-plugin
+
+# yt-dlp is imported directly; httpx is a protoAgent core dep. ffmpeg must be on
+# the host/container PATH (yt-dlp shells out to it for merge/transcode/thumbs).
+requires_pip: ["yt-dlp>=2025.1.1"]
+
+capabilities:
+  network: ["*"]              # fetches arbitrary video URLs
+  filesystem: scoped          # writes only under the configured library paths
+  subprocess: ["ffmpeg", "ffprobe"]
+
+# Claims the top-level `media_manager:` config section. Paths are container mount
+# points; jellyfin_api_key is a secret (env JELLYFIN_API_KEY).
+config_section: media_manager
+config:
+  library_path: /library/movies
+  audio_path: /library/music
+  staging_dir: /sandbox/media-manager/staging
+  db_path: /sandbox/media-manager/jobs.db
+  jellyfin_url: http://jellyfin:8096
+  subtitle_langs: [en]
+  audio_format: mp3
+  allow_playlist: true
+  max_playlist_items: 50
+secrets: [jellyfin_api_key]
+settings:
+  - { key: library_path, label: "Video library path", type: string, description: "Container path (mounted) where ingested videos land — a Jellyfin library folder." }
+  - { key: audio_path, label: "Audio library path", type: string, description: "Container path for audio-only extractions." }
+  - { key: jellyfin_url, label: "Jellyfin URL", type: string, description: "Base URL of the Jellyfin server (e.g. http://jellyfin:8096)." }
+  - { key: jellyfin_api_key, label: "Jellyfin API key", type: secret, description: "API key to trigger a library scan after ingest. Empty = rely on Jellyfin's scheduled scan." }
+  - { key: subtitle_langs, label: "Subtitle languages", type: string_list, description: "Languages to fetch as .srt sidecars (e.g. en)." }
+  - { key: audio_format, label: "Audio format", type: string, description: "Codec for audio-only extraction (mp3, m4a, opus, flac)." }
+  - { key: allow_playlist, label: "Expand playlists", type: bool, description: "Ingest every entry when given a playlist/channel URL." }
+  - { key: max_playlist_items, label: "Max playlist items", type: number, description: "Cap on entries ingested from a single playlist/channel." }
+
+views:
+  - { id: media_manager, label: "Media Manager", icon: Clapperboard, placement: right, path: /plugins/media_manager/view }
+
+public_paths:
+  - /plugins/media_manager/view
